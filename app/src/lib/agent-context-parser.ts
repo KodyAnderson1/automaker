@@ -132,20 +132,21 @@ function getCurrentPhase(content: string): "planning" | "action" | "verification
  * Extracts a summary from completed feature context
  */
 function extractSummary(content: string): string | undefined {
+  // Look for summary sections - capture everything including subsections (###)
+  // Stop at same-level ## sections (but not ###), or tool markers, or end
+  const summaryMatch = content.match(/## Summary[^\n]*\n([\s\S]*?)(?=\n## [^#]|\n🔧|$)/i);
+  if (summaryMatch) {
+    return summaryMatch[1].trim();
+  }
+
   // Look for completion markers and extract surrounding text
   const completionMatch = content.match(/✓ (?:Feature|Verification|Task) (?:successfully|completed|verified)[^\n]*(?:\n[^\n]{1,200})?/i);
   if (completionMatch) {
     return completionMatch[0].trim();
   }
 
-  // Look for summary sections
-  const summaryMatch = content.match(/## Summary[^\n]*\n([\s\S]{1,500}?)(?=\n##|\n🔧|$)/i);
-  if (summaryMatch) {
-    return summaryMatch[1].trim();
-  }
-
   // Look for "What was done" type sections
-  const whatWasDoneMatch = content.match(/(?:What was done|Changes made|Implemented)[^\n]*\n([\s\S]{1,500}?)(?=\n##|\n🔧|$)/i);
+  const whatWasDoneMatch = content.match(/(?:What was done|Changes made|Implemented)[^\n]*\n([\s\S]*?)(?=\n## [^#]|\n🔧|$)/i);
   if (whatWasDoneMatch) {
     return whatWasDoneMatch[1].trim();
   }

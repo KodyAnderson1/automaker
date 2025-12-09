@@ -50,6 +50,7 @@ import {
   formatModelName,
   DEFAULT_MODEL,
 } from "@/lib/agent-context-parser";
+import { Markdown } from "@/components/ui/markdown";
 
 interface KanbanCardProps {
   feature: Feature;
@@ -674,7 +675,7 @@ export function KanbanCard({
       {/* Summary Modal */}
       <Dialog open={isSummaryDialogOpen} onOpenChange={setIsSummaryDialogOpen}>
         <DialogContent
-          className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
+          className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col"
           data-testid={`summary-dialog-${feature.id}`}
         >
           <DialogHeader>
@@ -682,16 +683,16 @@ export function KanbanCard({
               <Sparkles className="w-5 h-5 text-green-400" />
               Implementation Summary
             </DialogTitle>
-            <DialogDescription className="text-sm">
-              {feature.description}
+            <DialogDescription className="text-sm" title={feature.description}>
+              {feature.description.length > 100
+                ? `${feature.description.slice(0, 100)}...`
+                : feature.description}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto">
-            <div className="prose prose-sm prose-invert max-w-none">
-              <pre className="whitespace-pre-wrap text-sm text-zinc-300 bg-zinc-900/50 p-4 rounded-lg border border-white/10">
-                {feature.summary || summary || agentInfo?.summary || "No summary available"}
-              </pre>
-            </div>
+          <div className="flex-1 overflow-y-auto p-4 bg-zinc-900/50 rounded-lg border border-white/10">
+            <Markdown>
+              {feature.summary || summary || agentInfo?.summary || "No summary available"}
+            </Markdown>
           </div>
           <DialogFooter>
             <Button
