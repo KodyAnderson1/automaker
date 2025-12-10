@@ -1,5 +1,10 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
+
+interface AnthropicResponse {
+  content?: Array<{ type: string; text?: string }>;
+  model?: string;
+  error?: { message?: string };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,31 +20,60 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create Anthropic client with the provided key
-    const anthropic = new Anthropic({
-      apiKey: effectiveApiKey,
+    // Send a simple test prompt to the Anthropic API
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": effectiveApiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 100,
+        messages: [
+          {
+            role: "user",
+            content: "Respond with exactly: 'Claude API connection successful!' and nothing else.",
+          },
+        ],
+      }),
     });
 
-    // Send a simple test prompt
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 100,
-      messages: [
-        {
-          role: "user",
-          content: "Respond with exactly: 'Claude SDK connection successful!' and nothing else.",
-        },
-      ],
-    });
+    if (!response.ok) {
+      const errorData = (await response.json()) as AnthropicResponse;
+      const errorMessage = errorData.error?.message || `HTTP ${response.status}`;
+
+      if (response.status === 401) {
+        return NextResponse.json(
+          { success: false, error: "Invalid API key. Please check your Anthropic API key." },
+          { status: 401 }
+        );
+      }
+
+      if (response.status === 429) {
+        return NextResponse.json(
+          { success: false, error: "Rate limit exceeded. Please try again later." },
+          { status: 429 }
+        );
+      }
+
+      return NextResponse.json(
+        { success: false, error: `API error: ${errorMessage}` },
+        { status: response.status }
+      );
+    }
+
+    const data = (await response.json()) as AnthropicResponse;
 
     // Check if we got a valid response
-    if (response.content && response.content.length > 0) {
-      const textContent = response.content.find((block) => block.type === "text");
-      if (textContent && textContent.type === "text") {
+    if (data.content && data.content.length > 0) {
+      const textContent = data.content.find((block) => block.type === "text");
+      if (textContent && textContent.type === "text" && textContent.text) {
         return NextResponse.json({
           success: true,
           message: `Connection successful! Response: "${textContent.text}"`,
-          model: response.model,
+          model: data.model,
         });
       }
     }
@@ -47,32 +81,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Connection successful! Claude responded.",
-      model: response.model,
+      model: data.model,
     });
   } catch (error: unknown) {
     console.error("Claude API test error:", error);
-
-    // Handle specific Anthropic API errors
-    if (error instanceof Anthropic.AuthenticationError) {
-      return NextResponse.json(
-        { success: false, error: "Invalid API key. Please check your Anthropic API key." },
-        { status: 401 }
-      );
-    }
-
-    if (error instanceof Anthropic.RateLimitError) {
-      return NextResponse.json(
-        { success: false, error: "Rate limit exceeded. Please try again later." },
-        { status: 429 }
-      );
-    }
-
-    if (error instanceof Anthropic.APIError) {
-      return NextResponse.json(
-        { success: false, error: `API error: ${error.message}` },
-        { status: error.status || 500 }
-      );
-    }
 
     const errorMessage =
       error instanceof Error ? error.message : "Failed to connect to Claude API";

@@ -266,7 +266,8 @@ export function useElectronAgent({
           setIsProcessing(false);
           setError(event.error);
           if (event.message) {
-            setMessages((prev) => [...prev, event.message]);
+            const errorMessage = event.message;
+            setMessages((prev) => [...prev, errorMessage]);
           }
           break;
       }
@@ -400,5 +401,8 @@ export function useElectronAgent({
     stopExecution,
     clearHistory,
     error,
+    queuedMessages,
+    isQueueProcessing: isProcessingQueue,
+    clearMessageQueue: clearQueue,
   };
 }

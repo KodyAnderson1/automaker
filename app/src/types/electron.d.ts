@@ -241,6 +241,24 @@ export interface AutoModeAPI {
     error?: string;
   }>;
 
+  resumeFeature: (projectPath: string, featureId: string) => Promise<{
+    success: boolean;
+    passes?: boolean;
+    error?: string;
+  }>;
+
+  contextExists: (projectPath: string, featureId: string) => Promise<{
+    success: boolean;
+    exists?: boolean;
+    error?: string;
+  }>;
+
+  analyzeProject: (projectPath: string) => Promise<{
+    success: boolean;
+    message?: string;
+    error?: string;
+  }>;
+
   followUpFeature: (projectPath: string, featureId: string, prompt: string, imagePaths?: string[]) => Promise<{
     success: boolean;
     passes?: boolean;
@@ -300,6 +318,10 @@ export interface ElectronAPI {
       size: number;
       mtime: Date;
     };
+    error?: string;
+  }>;
+  deleteFile: (filePath: string) => Promise<{
+    success: boolean;
     error?: string;
   }>;
 

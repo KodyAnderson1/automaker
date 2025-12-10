@@ -326,8 +326,8 @@ export function AnalysisView() {
       const analyzeStructure = () => {
         const structure: string[] = [];
         const topLevelDirs = projectAnalysis.fileTree
-          .filter((n) => n.isDirectory)
-          .map((n) => n.name);
+          .filter((n: FileTreeNode) => n.isDirectory)
+          .map((n: FileTreeNode) => n.name);
 
         for (const dir of topLevelDirs) {
           structure.push(`      <directory name="${dir}" />`);
@@ -350,14 +350,14 @@ export function AnalysisView() {
   <technology_stack>
     <languages>
 ${Object.entries(projectAnalysis.filesByExtension)
-  .filter(([ext]) =>
+  .filter(([ext]: [string, number]) =>
     ["ts", "tsx", "js", "jsx", "py", "go", "rs", "java", "cpp", "c"].includes(
       ext
     )
   )
-  .sort((a, b) => b[1] - a[1])
+  .sort((a: [string, number], b: [string, number]) => b[1] - a[1])
   .slice(0, 5)
-  .map(([ext, count]) => `      <language ext=".${ext}" count="${count}" />`)
+  .map(([ext, count]: [string, number]) => `      <language ext=".${ext}" count="${count}" />`)
   .join("\n")}
     </languages>
     <frameworks>
@@ -375,10 +375,10 @@ ${analyzeStructure()}
 
   <file_breakdown>
 ${Object.entries(projectAnalysis.filesByExtension)
-  .sort((a, b) => b[1] - a[1])
+  .sort((a: [string, number], b: [string, number]) => b[1] - a[1])
   .slice(0, 10)
   .map(
-    ([ext, count]) =>
+    ([ext, count]: [string, number]) =>
       `    <extension type="${
         ext.startsWith("(") ? ext : "." + ext
       }" count="${count}" />`
@@ -465,11 +465,11 @@ ${Object.entries(projectAnalysis.filesByExtension)
       const detectFeatures = () => {
         const extensions = projectAnalysis.filesByExtension;
         const topLevelDirs = projectAnalysis.fileTree
-          .filter((n) => n.isDirectory)
-          .map((n) => n.name.toLowerCase());
+          .filter((n: FileTreeNode) => n.isDirectory)
+          .map((n: FileTreeNode) => n.name.toLowerCase());
         const topLevelFiles = projectAnalysis.fileTree
-          .filter((n) => !n.isDirectory)
-          .map((n) => n.name.toLowerCase());
+          .filter((n: FileTreeNode) => !n.isDirectory)
+          .map((n: FileTreeNode) => n.name.toLowerCase());
 
         // Check for test directories and files
         const hasTests =
@@ -840,7 +840,7 @@ ${Object.entries(projectAnalysis.filesByExtension)
         </div>
         {node.isDirectory && isExpanded && node.children && (
           <div>
-            {node.children.map((child) => renderNode(child, depth + 1))}
+            {node.children.map((child: FileTreeNode) => renderNode(child, depth + 1))}
           </div>
         )}
       </div>
@@ -964,9 +964,9 @@ ${Object.entries(projectAnalysis.filesByExtension)
                 <CardContent>
                   <div className="space-y-2">
                     {Object.entries(projectAnalysis.filesByExtension)
-                      .sort((a, b) => b[1] - a[1])
+                      .sort((a: [string, number], b: [string, number]) => b[1] - a[1])
                       .slice(0, 15)
-                      .map(([ext, count]) => (
+                      .map(([ext, count]: [string, number]) => (
                         <div key={ext} className="flex justify-between text-sm">
                           <span className="text-muted-foreground font-mono">
                             {ext.startsWith("(") ? ext : `.${ext}`}
@@ -1107,7 +1107,7 @@ ${Object.entries(projectAnalysis.filesByExtension)
                 data-testid="analysis-file-tree"
               >
                 <div className="p-2">
-                  {projectAnalysis.fileTree.map((node) => renderNode(node))}
+                  {projectAnalysis.fileTree.map((node: FileTreeNode) => renderNode(node))}
                 </div>
               </CardContent>
             </Card>

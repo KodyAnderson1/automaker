@@ -262,5 +262,17 @@
     "summary": "Added git diff panel for in-progress and waiting approval features. Created GitDiffPanel component with themed syntax highlighting. Modified: git-diff-panel.tsx (new), agent-output-modal.tsx, worktree-manager.js, auto-mode-service.js, main.js, preload.js, electron.d.ts. The panel shows changed files with +/- stats and expandable unified diff view using CSS theme variables.",
     "model": "opus",
     "thinkingLevel": "ultrathink"
+  },
+  {
+    "id": "feature-1765370691119-yz43i6m6a",
+    "category": "Core",
+    "description": "i want you to run 'npx tsc --noEmi' on our app and fix / get rid of typescript errors that are left ",
+    "steps": [],
+    "status": "verified",
+    "imagePaths": [],
+    "skipTests": false,
+    "summary": "Fixed all TypeScript errors in the codebase. Modified: src/app/api/claude/test/route.ts (rewrote to use fetch instead of missing @anthropic-ai/sdk), src/lib/electron.ts (fixed saveImageToTemp signature, removed duplicate Window declaration), src/types/electron.d.ts (added deleteFile, resumeFeature, contextExists, analyzeProject methods), src/store/app-store.ts (added FileTreeNode, ProjectAnalysis types and analysis state/actions), src/components/views/analysis-view.tsx (added type annotations for implicit any), src/hooks/use-electron-agent.ts (fixed return type to include queue properties). Created: src/components/ui/badge.tsx (new component required by chat-history.tsx).",
+    "model": "opus",
+    "thinkingLevel": "ultrathink"
   }
 ]

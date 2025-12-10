@@ -78,7 +78,7 @@ export interface ElectronAPI {
   deleteFile: (filePath: string) => Promise<WriteResult>;
   trashItem?: (filePath: string) => Promise<WriteResult>;
   getPath: (name: string) => Promise<string>;
-  saveImageToTemp?: (data: string, filename: string, mimeType: string) => Promise<SaveImageResult>;
+  saveImageToTemp?: (data: string, filename: string, mimeType: string, projectPath?: string) => Promise<SaveImageResult>;
   autoMode?: AutoModeAPI;
   checkClaudeCli?: () => Promise<{
     success: boolean;
@@ -132,12 +132,8 @@ export interface ElectronAPI {
   git?: GitAPI;
 }
 
-declare global {
-  interface Window {
-    electronAPI?: ElectronAPI;
-    isElectron?: boolean;
-  }
-}
+// Note: Window interface is declared in @/types/electron.d.ts
+// Do not redeclare here to avoid type conflicts
 
 // Mock data for web development
 const mockFeatures = [
@@ -386,12 +382,13 @@ export const getElectronAPI = (): ElectronAPI => {
     },
 
     // Save image to temp directory
-    saveImageToTemp: async (data: string, filename: string, mimeType: string) => {
-      // Generate a mock temp file path
+    saveImageToTemp: async (data: string, filename: string, mimeType: string, projectPath?: string) => {
+      // Generate a mock temp file path - use projectPath if provided
       const timestamp = Date.now();
-      const ext = mimeType.split("/")[1] || "png";
       const safeName = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
-      const tempFilePath = `/tmp/automaker-images/${timestamp}_${safeName}`;
+      const tempFilePath = projectPath
+        ? `${projectPath}/.automaker/images/${timestamp}_${safeName}`
+        : `/tmp/automaker-images/${timestamp}_${safeName}`;
 
       // Store the image data in mock file system for testing
       mockFileSystem[tempFilePath] = data;

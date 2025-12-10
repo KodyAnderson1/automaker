@@ -126,6 +126,24 @@ export interface Feature {
   branchName?: string; // Name of the feature branch
 }
 
+// File tree node for project analysis
+export interface FileTreeNode {
+  name: string;
+  path: string;
+  isDirectory: boolean;
+  extension?: string;
+  children?: FileTreeNode[];
+}
+
+// Project analysis result
+export interface ProjectAnalysis {
+  fileTree: FileTreeNode[];
+  totalFiles: number;
+  totalDirectories: number;
+  filesByExtension: Record<string, number>;
+  analyzedAt: string;
+}
+
 export interface AppState {
   // Project state
   projects: Project[];
@@ -173,6 +191,10 @@ export interface AppState {
 
   // AI Profiles
   aiProfiles: AIProfile[];
+
+  // Project Analysis
+  projectAnalysis: ProjectAnalysis | null;
+  isAnalyzing: boolean;
 }
 
 export interface AutoModeActivity {
@@ -267,6 +289,11 @@ export interface AppActions {
   removeAIProfile: (id: string) => void;
   reorderAIProfiles: (oldIndex: number, newIndex: number) => void;
 
+  // Project Analysis actions
+  setProjectAnalysis: (analysis: ProjectAnalysis | null) => void;
+  setIsAnalyzing: (analyzing: boolean) => void;
+  clearAnalysis: () => void;
+
   // Reset
   reset: () => void;
 }
@@ -351,6 +378,8 @@ const initialState: AppState = {
   defaultSkipTests: false, // Default to TDD mode (tests enabled)
   useWorktrees: false, // Default to disabled (worktree feature is experimental)
   aiProfiles: DEFAULT_AI_PROFILES,
+  projectAnalysis: null,
+  isAnalyzing: false,
 };
 
 export const useAppStore = create<AppState & AppActions>()(
@@ -712,6 +741,11 @@ export const useAppStore = create<AppState & AppActions>()(
         profiles.splice(newIndex, 0, movedProfile);
         set({ aiProfiles: profiles });
       },
+
+      // Project Analysis actions
+      setProjectAnalysis: (analysis) => set({ projectAnalysis: analysis }),
+      setIsAnalyzing: (analyzing) => set({ isAnalyzing: analyzing }),
+      clearAnalysis: () => set({ projectAnalysis: null }),
 
       // Reset
       reset: () => set(initialState),
