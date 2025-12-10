@@ -20,16 +20,18 @@ import {
   Check,
   BookOpen,
   GripVertical,
-  RotateCw,
   RotateCcw,
   Trash2,
   Undo2,
   UserCircle,
+  MoreVertical,
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -177,6 +179,7 @@ export function Sidebar() {
     reorderProjects,
     cyclePrevProject,
     cycleNextProject,
+    clearProjectHistory,
   } = useAppStore();
 
   // State for project picker dropdown
@@ -777,32 +780,40 @@ export function Sidebar() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Project Cycle Buttons - only show when there's history */}
+            {/* Project History Menu - only show when there's history */}
             {projectHistory.length > 1 && (
-              <div className="hidden lg:flex items-center gap-1">
-                <button
-                  onClick={cyclePrevProject}
-                  className="flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50 border border-sidebar-border transition-all titlebar-no-drag group relative"
-                  title={`Previous project (${ACTION_SHORTCUTS.cyclePrevProject})`}
-                  data-testid="cycle-prev-project"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  <span className="absolute -bottom-5 px-1 py-0.5 text-[9px] font-mono rounded bg-sidebar-accent/20 border border-sidebar-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                    {ACTION_SHORTCUTS.cyclePrevProject}
-                  </span>
-                </button>
-                <button
-                  onClick={cycleNextProject}
-                  className="flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50 border border-sidebar-border transition-all titlebar-no-drag group relative"
-                  title={`Next project (${ACTION_SHORTCUTS.cycleNextProject})`}
-                  data-testid="cycle-next-project"
-                >
-                  <RotateCw className="w-4 h-4" />
-                  <span className="absolute -bottom-5 px-1 py-0.5 text-[9px] font-mono rounded bg-sidebar-accent/20 border border-sidebar-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                    {ACTION_SHORTCUTS.cycleNextProject}
-                  </span>
-                </button>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50 border border-sidebar-border transition-all titlebar-no-drag"
+                    title="Project history"
+                    data-testid="project-history-menu"
+                  >
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={cyclePrevProject} data-testid="cycle-prev-project">
+                    <Undo2 className="w-4 h-4 mr-2" />
+                    <span className="flex-1">Previous</span>
+                    <span className="text-[10px] font-mono text-muted-foreground ml-2">
+                      {ACTION_SHORTCUTS.cyclePrevProject}
+                    </span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={cycleNextProject} data-testid="cycle-next-project">
+                    <Redo2 className="w-4 h-4 mr-2" />
+                    <span className="flex-1">Next</span>
+                    <span className="text-[10px] font-mono text-muted-foreground ml-2">
+                      {ACTION_SHORTCUTS.cycleNextProject}
+                    </span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={clearProjectHistory} data-testid="clear-project-history">
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    <span>Clear history</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         )}
