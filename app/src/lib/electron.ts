@@ -41,21 +41,7 @@ export interface StatResult {
   error?: string;
 }
 
-// Auto Mode types - Import from electron.d.ts for internal use
-import type {
-  AutoModeEvent as AutoModeEventType,
-  ModelDefinition as ModelDefinitionType,
-  ProviderStatus as ProviderStatusType,
-  WorktreeAPI as WorktreeAPIType,
-  GitAPI as GitAPIType,
-  WorktreeInfo as WorktreeInfoType,
-  WorktreeStatus as WorktreeStatusType,
-  FileDiffsResult as FileDiffsResultType,
-  FileDiffResult as FileDiffResultType,
-  FileStatus as FileStatusType,
-} from "@/types/electron";
-
-// Re-export types for external use
+// Re-export types from electron.d.ts for external use
 export type {
   AutoModeEvent,
   ModelDefinition,
@@ -69,17 +55,12 @@ export type {
   FileStatus,
 } from "@/types/electron";
 
-// Type aliases for internal use
-type AutoModeEvent = AutoModeEventType;
-type ModelDefinition = ModelDefinitionType;
-type ProviderStatus = ProviderStatusType;
-type WorktreeAPI = WorktreeAPIType;
-type GitAPI = GitAPIType;
-type WorktreeInfo = WorktreeInfoType;
-type WorktreeStatus = WorktreeStatusType;
-type FileDiffsResult = FileDiffsResultType;
-type FileDiffResult = FileDiffResultType;
-type FileStatus = FileStatusType;
+// Import types for internal use in this file
+import type {
+  AutoModeEvent,
+  WorktreeAPI,
+  GitAPI,
+} from "@/types/electron";
 
 // Feature type - Import from app-store
 import type { Feature } from "@/store/app-store";

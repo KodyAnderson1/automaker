@@ -233,16 +233,15 @@ function ClaudeSetupStep({
           setClaudeCliStatus(cliStatus);
 
           if (result.auth) {
-            const methodMap: Record<string, "oauth_token_env" | "oauth_token" | "api_key" | "api_key_env" | "none"> = {
-              oauth_token_env: "oauth_token_env",
-              oauth_token: "oauth_token",
-              api_key: "api_key",
-              api_key_env: "api_key_env",
-              none: "none",
-            };
+            // Validate method is one of the expected values, default to "none"
+            const validMethods = ["oauth_token_env", "oauth_token", "api_key", "api_key_env", "none"] as const;
+            type AuthMethod = typeof validMethods[number];
+            const method: AuthMethod = validMethods.includes(result.auth.method as AuthMethod)
+              ? (result.auth.method as AuthMethod)
+              : "none";
             const authStatus = {
               authenticated: result.auth.authenticated,
-              method: methodMap[result.auth.method] || "none",
+              method,
               hasCredentialsFile: false,
               oauthTokenValid: result.auth.hasStoredOAuthToken || result.auth.hasEnvOAuthToken,
               apiKeyValid: result.auth.hasStoredApiKey || result.auth.hasEnvApiKey,

@@ -168,17 +168,6 @@ class CodexCliDetector {
         };
       }
 
-      // If auth file exists, assume authenticated
-      if (fs.existsSync(authPath)) {
-        return {
-          authenticated: true,
-          method: 'auth_file',
-          hasAuthFile: true,
-          hasEnvKey: !!envApiKey,
-          authPath
-        };
-      }
-
       return {
         authenticated: false,
         method: 'none',

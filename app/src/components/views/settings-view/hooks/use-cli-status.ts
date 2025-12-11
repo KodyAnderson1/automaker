@@ -69,17 +69,15 @@ export function useCliStatus() {
           const result = await api.setup.getClaudeStatus();
           if (result.success && result.auth) {
             const auth = result.auth;
-            // Map the method directly from detector
-            const methodMap: Record<string, "oauth_token_env" | "oauth_token" | "api_key" | "api_key_env" | "none"> = {
-              oauth_token_env: "oauth_token_env",
-              oauth_token: "oauth_token",
-              api_key: "api_key",
-              api_key_env: "api_key_env",
-              none: "none",
-            };
+            // Validate method is one of the expected values, default to "none"
+            const validMethods = ["oauth_token_env", "oauth_token", "api_key", "api_key_env", "none"] as const;
+            type AuthMethod = typeof validMethods[number];
+            const method: AuthMethod = validMethods.includes(auth.method as AuthMethod)
+              ? (auth.method as AuthMethod)
+              : "none";
             const authStatus = {
               authenticated: auth.authenticated,
-              method: methodMap[auth.method] || "none",
+              method,
               hasCredentialsFile: auth.hasCredentialsFile ?? false,
               oauthTokenValid: auth.hasStoredOAuthToken || auth.hasEnvOAuthToken,
               apiKeyValid: auth.hasStoredApiKey || auth.hasEnvApiKey,
