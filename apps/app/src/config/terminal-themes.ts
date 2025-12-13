@@ -331,6 +331,31 @@ const synthwaveTheme: TerminalTheme = {
   brightWhite: "#ffffff",
 };
 
+// Red theme - Dark theme with red accents
+const redTheme: TerminalTheme = {
+  background: "#1a0a0a",
+  foreground: "#e0d0d0",
+  cursor: "#ff4444",
+  cursorAccent: "#1a0a0a",
+  selectionBackground: "#5a2020",
+  black: "#2a1010",
+  red: "#ff4444",
+  green: "#88cc88",
+  yellow: "#ffcc66",
+  blue: "#7799cc",
+  magenta: "#cc6699",
+  cyan: "#66aaaa",
+  white: "#e0d0d0",
+  brightBlack: "#6a4040",
+  brightRed: "#ff6666",
+  brightGreen: "#aaddaa",
+  brightYellow: "#ffdd88",
+  brightBlue: "#99bbdd",
+  brightMagenta: "#dd88bb",
+  brightCyan: "#88cccc",
+  brightWhite: "#fff0f0",
+};
+
 // Theme mapping
 const terminalThemes: Record<ThemeMode, TerminalTheme> = {
   light: lightTheme,
@@ -346,6 +371,7 @@ const terminalThemes: Record<ThemeMode, TerminalTheme> = {
   catppuccin: catppuccinTheme,
   onedark: onedarkTheme,
   synthwave: synthwaveTheme,
+  red: redTheme,
 };
 
 /**

@@ -315,7 +315,7 @@ export interface ProjectAnalysis {
 // Terminal panel layout types (recursive for splits)
 export type TerminalPanelContent =
   | { type: "terminal"; sessionId: string; size?: number; fontSize?: number }
-  | { type: "split"; direction: "horizontal" | "vertical"; panels: TerminalPanelContent[] };
+  | { type: "split"; direction: "horizontal" | "vertical"; panels: TerminalPanelContent[]; size?: number };
 
 // Terminal tab - each tab has its own layout
 export interface TerminalTab {
