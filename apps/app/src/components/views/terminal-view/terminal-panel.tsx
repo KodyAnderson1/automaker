@@ -193,8 +193,11 @@ export function TerminalPanel({
         const now = Date.now();
         const canTrigger = now - lastShortcutTimeRef.current > SHORTCUT_COOLDOWN_MS;
 
+        // Use event.code for keyboard-layout-independent key detection
+        const code = event.code;
+
         // Alt+D - Split right
-        if (event.altKey && !event.shiftKey && !event.ctrlKey && !event.metaKey && event.key.toLowerCase() === 'd') {
+        if (event.altKey && !event.shiftKey && !event.ctrlKey && !event.metaKey && code === 'KeyD') {
           event.preventDefault();
           if (canTrigger) {
             lastShortcutTimeRef.current = now;
@@ -203,8 +206,8 @@ export function TerminalPanel({
           return false;
         }
 
-        // Alt+Shift+D - Split down
-        if (event.altKey && event.shiftKey && !event.ctrlKey && !event.metaKey && event.key.toLowerCase() === 'd') {
+        // Alt+S - Split down
+        if (event.altKey && !event.shiftKey && !event.ctrlKey && !event.metaKey && code === 'KeyS') {
           event.preventDefault();
           if (canTrigger) {
             lastShortcutTimeRef.current = now;
@@ -214,7 +217,7 @@ export function TerminalPanel({
         }
 
         // Alt+W - Close terminal
-        if (event.altKey && !event.shiftKey && !event.ctrlKey && !event.metaKey && event.key.toLowerCase() === 'w') {
+        if (event.altKey && !event.shiftKey && !event.ctrlKey && !event.metaKey && code === 'KeyW') {
           event.preventDefault();
           if (canTrigger) {
             lastShortcutTimeRef.current = now;

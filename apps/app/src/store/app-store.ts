@@ -199,7 +199,7 @@ export const DEFAULT_KEYBOARD_SHORTCUTS: KeyboardShortcuts = {
   // Terminal shortcuts (only active in terminal view)
   // Using Alt modifier to avoid conflicts with both terminal signals AND browser shortcuts
   splitTerminalRight: "Alt+D",
-  splitTerminalDown: "Alt+Shift+D",
+  splitTerminalDown: "Alt+S",
   closeTerminal: "Alt+W",
 };
 
