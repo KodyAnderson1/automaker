@@ -240,7 +240,7 @@ export function Sidebar() {
 
   // Auto-collapse sidebar on small screens
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(max-width: 1024px)'); // lg breakpoint
+    const mediaQuery = window.matchMedia("(max-width: 1024px)"); // lg breakpoint
 
     const handleResize = () => {
       if (mediaQuery.matches && sidebarOpen) {
@@ -253,8 +253,8 @@ export function Sidebar() {
     handleResize();
 
     // Listen for changes
-    mediaQuery.addEventListener('change', handleResize);
-    return () => mediaQuery.removeEventListener('change', handleResize);
+    mediaQuery.addEventListener("change", handleResize);
+    return () => mediaQuery.removeEventListener("change", handleResize);
   }, [sidebarOpen, toggleSidebar]);
 
   // Filtered projects based on search query
@@ -816,27 +816,37 @@ export function Sidebar() {
         >
           <div
             className={cn(
-              "flex items-center titlebar-no-drag cursor-pointer",
+              "flex items-center titlebar-no-drag cursor-pointer group",
               !sidebarOpen && "flex-col gap-1"
             )}
             onClick={() => setCurrentView("welcome")}
             data-testid="logo-button"
           >
-            <div className="relative flex items-center justify-center rounded-lg group">
-              <img
-                src="/logo.png"
-                alt="Automaker Logo"
-                className="size-8 group-hover:rotate-12 transition-transform"
-              />
-            </div>
-            <span
-              className={cn(
-                "ml-1 font-bold text-sidebar-foreground text-base tracking-tight",
-                sidebarOpen ? "hidden lg:block" : "hidden"
-              )}
-            >
-              Auto<span className="text-brand-500">maker</span>
-            </span>
+            {!sidebarOpen ? (
+              <div className="relative flex items-center justify-center rounded-lg">
+                <img
+                  src="/logo.png"
+                  alt="Automaker Logo"
+                  className="size-8 group-hover:rotate-12 transition-transform"
+                />
+              </div>
+            ) : (
+              <span
+                className={cn(
+                  "flex items-center font-bold text-sidebar-foreground text-base tracking-tight",
+                  "hidden lg:flex"
+                )}
+              >
+                <img
+                  src="/logo.png"
+                  alt="A"
+                  className="h-[1.3em] w-auto inline-block align-middle group-hover:rotate-12 transition-transform"
+                />
+                <span className="-ml-0.5">
+                  uto<span className="text-brand-500">maker</span>
+                </span>
+              </span>
+            )}
           </div>
           {/* Bug Report Button */}
           <button
