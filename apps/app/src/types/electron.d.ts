@@ -269,6 +269,29 @@ export type AutoModeEvent =
       featureId: string;
       mode: "lite" | "spec" | "full";
       message: string;
+    }
+  | {
+      type: "auto_mode_task_started";
+      featureId: string;
+      projectPath?: string;
+      taskId: string;
+      taskDescription: string;
+      taskIndex: number;
+      tasksTotal: number;
+    }
+  | {
+      type: "auto_mode_task_complete";
+      featureId: string;
+      projectPath?: string;
+      taskId: string;
+      tasksCompleted: number;
+      tasksTotal: number;
+    }
+  | {
+      type: "auto_mode_phase_complete";
+      featureId: string;
+      projectPath?: string;
+      phaseNumber: number;
     };
 
 export type SpecRegenerationEvent =

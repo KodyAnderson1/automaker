@@ -293,6 +293,52 @@ export function useAutoMode() {
             });
           }
           break;
+
+        case "auto_mode_task_started":
+          // Task started - show which task is being worked on
+          if (event.featureId && "taskId" in event && "taskDescription" in event) {
+            const taskEvent = event as Extract<AutoModeEvent, { type: "auto_mode_task_started" }>;
+            console.log(
+              `[AutoMode] Task ${taskEvent.taskId} started for ${event.featureId}: ${taskEvent.taskDescription}`
+            );
+            addAutoModeActivity({
+              featureId: event.featureId,
+              type: "progress",
+              message: `▶ Starting ${taskEvent.taskId}: ${taskEvent.taskDescription}`,
+            });
+          }
+          break;
+
+        case "auto_mode_task_complete":
+          // Task completed - show progress
+          if (event.featureId && "taskId" in event) {
+            const taskEvent = event as Extract<AutoModeEvent, { type: "auto_mode_task_complete" }>;
+            console.log(
+              `[AutoMode] Task ${taskEvent.taskId} completed for ${event.featureId} (${taskEvent.tasksCompleted}/${taskEvent.tasksTotal})`
+            );
+            addAutoModeActivity({
+              featureId: event.featureId,
+              type: "progress",
+              message: `✓ ${taskEvent.taskId} done (${taskEvent.tasksCompleted}/${taskEvent.tasksTotal})`,
+            });
+          }
+          break;
+
+        case "auto_mode_phase_complete":
+          // Phase completed (for full mode with phased tasks)
+          if (event.featureId && "phaseNumber" in event) {
+            const phaseEvent = event as Extract<AutoModeEvent, { type: "auto_mode_phase_complete" }>;
+            console.log(
+              `[AutoMode] Phase ${phaseEvent.phaseNumber} completed for ${event.featureId}`
+            );
+            addAutoModeActivity({
+              featureId: event.featureId,
+              type: "action",
+              message: `Phase ${phaseEvent.phaseNumber} completed`,
+              phase: "action",
+            });
+          }
+          break;
       }
     });
 

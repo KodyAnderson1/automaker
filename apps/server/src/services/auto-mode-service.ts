@@ -25,6 +25,14 @@ const execAsync = promisify(exec);
 
 type PlanningMode = 'skip' | 'lite' | 'spec' | 'full';
 
+interface ParsedTask {
+  id: string;          // e.g., "T001"
+  description: string; // e.g., "Create user model"
+  filePath?: string;   // e.g., "src/models/user.ts"
+  phase?: string;      // e.g., "Phase 1: Foundation" (for full mode)
+  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+}
+
 interface PlanSpec {
   status: 'pending' | 'generating' | 'generated' | 'approved' | 'rejected';
   content?: string;
@@ -34,6 +42,8 @@ interface PlanSpec {
   reviewedByUser: boolean;
   tasksCompleted?: number;
   tasksTotal?: number;
+  currentTaskId?: string;
+  tasks?: ParsedTask[];
 }
 
 const PLANNING_PROMPTS = {
@@ -69,44 +79,204 @@ DO NOT proceed with implementation until you receive explicit approval.`,
 
   spec: `## Specification Phase (Spec Mode)
 
-Before implementing, generate a specification and WAIT for approval:
+Before implementing, generate a specification with an actionable task breakdown. WAIT for approval before implementing.
+
+### Specification Format
 
 1. **Problem**: What problem are we solving? (user perspective)
-2. **Solution**: Brief approach (1 sentence)
-3. **Acceptance Criteria**: 3-5 items in GIVEN-WHEN-THEN format
-4. **Files to Modify**: Table with File, Purpose, Action
-5. **Tasks**: Numbered implementation tasks
 
-After generating the spec, output:
+2. **Solution**: Brief approach (1-2 sentences)
+
+3. **Acceptance Criteria**: 3-5 items in GIVEN-WHEN-THEN format
+   - GIVEN [context], WHEN [action], THEN [outcome]
+
+4. **Files to Modify**:
+   | File | Purpose | Action |
+   |------|---------|--------|
+   | path/to/file | description | create/modify/delete |
+
+5. **Implementation Tasks**:
+   Use this EXACT format for each task (the system will parse these):
+   \`\`\`tasks
+   - [ ] T001: [Description] | File: [path/to/file]
+   - [ ] T002: [Description] | File: [path/to/file]
+   - [ ] T003: [Description] | File: [path/to/file]
+   \`\`\`
+
+   Task ID rules:
+   - Sequential: T001, T002, T003, etc.
+   - Description: Clear action (e.g., "Create user model", "Add API endpoint")
+   - File: Primary file affected (helps with context)
+   - Order by dependencies (foundational tasks first)
+
+6. **Verification**: How to confirm feature works
+
+After generating the spec, output on its own line:
 "[SPEC_GENERATED] Please review the specification above. Reply with 'approved' to proceed or provide feedback for revisions."
 
-DO NOT proceed with implementation until you receive explicit approval.`,
+DO NOT proceed with implementation until you receive explicit approval.
+
+When approved, execute tasks SEQUENTIALLY in order. For each task:
+1. BEFORE starting, output: "[TASK_START] T###: Description"
+2. Implement the task
+3. AFTER completing, output: "[TASK_COMPLETE] T###: Brief summary"
+
+This allows real-time progress tracking during implementation.`,
 
   full: `## Full Specification Phase (Full SDD Mode)
 
-Before implementing, generate a comprehensive specification and WAIT for approval:
+Before implementing, generate a comprehensive specification with phased task breakdown. WAIT for approval before implementing.
 
-1. **Problem Statement**: 2-3 sentences, user perspective
+### Specification Format
+
+1. **Problem Statement**: 2-3 sentences from user perspective
+
 2. **User Story**: As a [user], I want [goal], so that [benefit]
-3. **Acceptance Criteria**: Multiple scenarios with GIVEN-WHEN-THEN
-   - Happy path scenario
-   - Edge case scenarios
-   - Error handling scenarios
-4. **Technical Context**:
-   - Files to modify (table format)
-   - Dependencies
-   - Constraints
-   - Existing patterns to follow
-5. **Non-Goals**: What this feature explicitly does NOT include
-6. **Implementation Plan**: Phased tasks (Phase 1: Foundation, Phase 2: Core, etc.)
-7. **Success Metrics**: How we know it's done
-8. **Risks & Mitigations**: Table of risks
 
-After generating, output:
+3. **Acceptance Criteria**: Multiple scenarios with GIVEN-WHEN-THEN
+   - **Happy Path**: GIVEN [context], WHEN [action], THEN [expected outcome]
+   - **Edge Cases**: GIVEN [edge condition], WHEN [action], THEN [handling]
+   - **Error Handling**: GIVEN [error condition], WHEN [action], THEN [error response]
+
+4. **Technical Context**:
+   | Aspect | Value |
+   |--------|-------|
+   | Affected Files | list of files |
+   | Dependencies | external libs if any |
+   | Constraints | technical limitations |
+   | Patterns to Follow | existing patterns in codebase |
+
+5. **Non-Goals**: What this feature explicitly does NOT include
+
+6. **Implementation Tasks**:
+   Use this EXACT format for each task (the system will parse these):
+   \`\`\`tasks
+   ## Phase 1: Foundation
+   - [ ] T001: [Description] | File: [path/to/file]
+   - [ ] T002: [Description] | File: [path/to/file]
+
+   ## Phase 2: Core Implementation
+   - [ ] T003: [Description] | File: [path/to/file]
+   - [ ] T004: [Description] | File: [path/to/file]
+
+   ## Phase 3: Integration & Testing
+   - [ ] T005: [Description] | File: [path/to/file]
+   - [ ] T006: [Description] | File: [path/to/file]
+   \`\`\`
+
+   Task ID rules:
+   - Sequential across all phases: T001, T002, T003, etc.
+   - Description: Clear action verb + target
+   - File: Primary file affected
+   - Order by dependencies within each phase
+   - Phase structure helps organize complex work
+
+7. **Success Metrics**: How we know it's done (measurable criteria)
+
+8. **Risks & Mitigations**:
+   | Risk | Mitigation |
+   |------|------------|
+   | description | approach |
+
+After generating the spec, output on its own line:
 "[SPEC_GENERATED] Please review the comprehensive specification above. Reply with 'approved' to proceed or provide feedback for revisions."
 
-DO NOT proceed with implementation until you receive explicit approval.`
+DO NOT proceed with implementation until you receive explicit approval.
+
+When approved, execute tasks SEQUENTIALLY by phase. For each task:
+1. BEFORE starting, output: "[TASK_START] T###: Description"
+2. Implement the task
+3. AFTER completing, output: "[TASK_COMPLETE] T###: Brief summary"
+
+After completing all tasks in a phase, output:
+"[PHASE_COMPLETE] Phase N complete"
+
+This allows real-time progress tracking during implementation.`
 };
+
+/**
+ * Parse tasks from generated spec content
+ * Looks for the ```tasks code block and extracts task lines
+ * Format: - [ ] T###: Description | File: path/to/file
+ */
+function parseTasksFromSpec(specContent: string): ParsedTask[] {
+  const tasks: ParsedTask[] = [];
+
+  // Extract content within ```tasks ... ``` block
+  const tasksBlockMatch = specContent.match(/```tasks\s*([\s\S]*?)```/);
+  if (!tasksBlockMatch) {
+    // Try fallback: look for task lines anywhere in content
+    const taskLines = specContent.match(/- \[ \] T\d{3}:.*$/gm);
+    if (!taskLines) {
+      return tasks;
+    }
+    // Parse fallback task lines
+    let currentPhase: string | undefined;
+    for (const line of taskLines) {
+      const parsed = parseTaskLine(line, currentPhase);
+      if (parsed) {
+        tasks.push(parsed);
+      }
+    }
+    return tasks;
+  }
+
+  const tasksContent = tasksBlockMatch[1];
+  const lines = tasksContent.split('\n');
+
+  let currentPhase: string | undefined;
+
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+
+    // Check for phase header (e.g., "## Phase 1: Foundation")
+    const phaseMatch = trimmedLine.match(/^##\s*(.+)$/);
+    if (phaseMatch) {
+      currentPhase = phaseMatch[1].trim();
+      continue;
+    }
+
+    // Check for task line
+    if (trimmedLine.startsWith('- [ ]')) {
+      const parsed = parseTaskLine(trimmedLine, currentPhase);
+      if (parsed) {
+        tasks.push(parsed);
+      }
+    }
+  }
+
+  return tasks;
+}
+
+/**
+ * Parse a single task line
+ * Format: - [ ] T###: Description | File: path/to/file
+ */
+function parseTaskLine(line: string, currentPhase?: string): ParsedTask | null {
+  // Match pattern: - [ ] T###: Description | File: path
+  const taskMatch = line.match(/- \[ \] (T\d{3}):\s*([^|]+)(?:\|\s*File:\s*(.+))?$/);
+  if (!taskMatch) {
+    // Try simpler pattern without file
+    const simpleMatch = line.match(/- \[ \] (T\d{3}):\s*(.+)$/);
+    if (simpleMatch) {
+      return {
+        id: simpleMatch[1],
+        description: simpleMatch[2].trim(),
+        phase: currentPhase,
+        status: 'pending',
+      };
+    }
+    return null;
+  }
+
+  return {
+    id: taskMatch[1],
+    description: taskMatch[2].trim(),
+    filePath: taskMatch[3]?.trim(),
+    phase: currentPhase,
+    status: 'pending',
+  };
+}
 
 interface Feature {
   id: string;
@@ -1500,13 +1670,25 @@ When done, summarize what you implemented and any notes for the developer.`;
               const markerIndex = responseText.indexOf('[SPEC_GENERATED]');
               const planContent = responseText.substring(0, markerIndex).trim();
 
-              // Update planSpec status to 'generated' and save content
+              // Parse tasks from the generated spec (for spec and full modes)
+              const parsedTasks = parseTasksFromSpec(planContent);
+              const tasksTotal = parsedTasks.length;
+
+              console.log(`[AutoMode] Parsed ${tasksTotal} tasks from spec for feature ${featureId}`);
+              if (parsedTasks.length > 0) {
+                console.log(`[AutoMode] Tasks: ${parsedTasks.map(t => t.id).join(', ')}`);
+              }
+
+              // Update planSpec status to 'generated' and save content with parsed tasks
               await this.updateFeaturePlanSpec(projectPath, featureId, {
                 status: 'generated',
                 content: planContent,
                 version: 1,
                 generatedAt: new Date().toISOString(),
                 reviewedByUser: false,
+                tasks: parsedTasks,
+                tasksTotal,
+                tasksCompleted: 0,
               });
 
               let approvedPlanContent = planContent;
@@ -1606,12 +1788,98 @@ When done, summarize what you implemented and any notes for the developer.`;
                 abortController,
               });
 
-              // Process continuation stream
+              // Track task progress for events
+              let startedTaskIds: string[] = [];
+              let completedTaskIds: string[] = [];
+              let currentPhaseNum = 1;
+              let currentTaskId: string | null = null;
+
+              // Process continuation stream with task progress tracking
               for await (const contMsg of continuationStream) {
                 if (contMsg.type === "assistant" && contMsg.message?.content) {
                   for (const contBlock of contMsg.message.content) {
                     if (contBlock.type === "text") {
                       responseText += contBlock.text || "";
+
+                      // Check for [TASK_START] markers - detect when task begins
+                      const taskStartMatches = responseText.match(/\[TASK_START\]\s*(T\d{3})/g);
+                      if (taskStartMatches) {
+                        for (const match of taskStartMatches) {
+                          const taskIdMatch = match.match(/T\d{3}/);
+                          if (taskIdMatch && !startedTaskIds.includes(taskIdMatch[0])) {
+                            const taskId = taskIdMatch[0];
+                            startedTaskIds.push(taskId);
+                            currentTaskId = taskId;
+
+                            // Find task details from parsed tasks
+                            const taskInfo = parsedTasks.find(t => t.id === taskId);
+                            const taskDescription = taskInfo?.description || 'Working on task';
+
+                            console.log(`[AutoMode] Task ${taskId} started for feature ${featureId}: ${taskDescription}`);
+
+                            // Emit task started event
+                            this.emitAutoModeEvent("auto_mode_task_started", {
+                              featureId,
+                              projectPath,
+                              taskId,
+                              taskDescription,
+                              taskIndex: startedTaskIds.length - 1,
+                              tasksTotal: parsedTasks.length,
+                            });
+
+                            // Update planSpec with current task
+                            await this.updateFeaturePlanSpec(projectPath, featureId, {
+                              currentTaskId: taskId,
+                            });
+                          }
+                        }
+                      }
+
+                      // Check for [TASK_COMPLETE] markers
+                      const taskCompleteMatches = responseText.match(/\[TASK_COMPLETE\]\s*(T\d{3})/g);
+                      if (taskCompleteMatches) {
+                        for (const match of taskCompleteMatches) {
+                          const taskIdMatch = match.match(/T\d{3}/);
+                          if (taskIdMatch && !completedTaskIds.includes(taskIdMatch[0])) {
+                            const taskId = taskIdMatch[0];
+                            completedTaskIds.push(taskId);
+
+                            console.log(`[AutoMode] Task ${taskId} completed for feature ${featureId}`);
+
+                            // Emit task completion event
+                            this.emitAutoModeEvent("auto_mode_task_complete", {
+                              featureId,
+                              projectPath,
+                              taskId,
+                              tasksCompleted: completedTaskIds.length,
+                              tasksTotal: parsedTasks.length,
+                            });
+
+                            // Update planSpec with task progress
+                            await this.updateFeaturePlanSpec(projectPath, featureId, {
+                              tasksCompleted: completedTaskIds.length,
+                              currentTaskId: taskId,
+                            });
+                          }
+                        }
+                      }
+
+                      // Check for [PHASE_COMPLETE] markers (for full mode)
+                      const phaseCompleteMatch = contBlock.text?.match(/\[PHASE_COMPLETE\]\s*Phase\s*(\d+)/i);
+                      if (phaseCompleteMatch) {
+                        const phaseNum = parseInt(phaseCompleteMatch[1], 10);
+                        if (phaseNum > currentPhaseNum) {
+                          currentPhaseNum = phaseNum;
+                          console.log(`[AutoMode] Phase ${phaseNum} completed for feature ${featureId}`);
+
+                          this.emitAutoModeEvent("auto_mode_phase_complete", {
+                            featureId,
+                            projectPath,
+                            phaseNumber: phaseNum,
+                          });
+                        }
+                      }
+
                       this.emitAutoModeEvent("auto_mode_progress", {
                         featureId,
                         content: contBlock.text,
@@ -1631,7 +1899,14 @@ When done, summarize what you implemented and any notes for the developer.`;
                 }
               }
 
-              console.log(`[AutoMode] Implementation completed for feature ${featureId}`);
+              // Mark all tasks as completed when implementation finishes
+              if (parsedTasks.length > 0) {
+                await this.updateFeaturePlanSpec(projectPath, featureId, {
+                  tasksCompleted: parsedTasks.length,
+                });
+              }
+
+              console.log(`[AutoMode] Implementation completed for feature ${featureId} (${completedTaskIds.length}/${parsedTasks.length} tasks tracked)`);
               // Exit the original stream loop since continuation is done
               break streamLoop;
             }
