@@ -117,7 +117,7 @@ export function KanbanBoard({
                       data-testid="archive-all-verified-button"
                     >
                       <Archive className="w-3 h-3 mr-1" />
-                      Archive All
+                      Complete All
                     </Button>
                   ) : column.id === 'backlog' ? (
                     <div className="flex items-center gap-1">
